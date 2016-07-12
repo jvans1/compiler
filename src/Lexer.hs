@@ -1,15 +1,35 @@
-module Lexer(process) where
+module Lexer(process, Token(..)) where
 import Control.Monad.Writer.Strict(Writer, runWriter, tell)
 import Data.Maybe(fromJust)
 import Data.List(takeWhile, dropWhile)
 import Data.Char(isDigit, isLetter)
 
-data Token = LParen | RParen | BinaryOp Op | Digit Float | Extern | Identifier String | Def deriving Show
-data Op = Add | Subtract | Multiply | Divide deriving Show
+data Token = LParen
+  | RParen
+  | Add
+  | Subtract
+  | Multiply
+  | Divide
+  | Digit Float
+  | Extern
+  | Identifier String
+  | Def 
 
 
-process :: String -> String
-process input = show . snd . runWriter $ token input
+instance Show Token where
+  show LParen         = "("
+  show RParen         = ")"
+  show Add            = "+"
+  show Subtract       = "-"
+  show Multiply       = "*"
+  show Divide         = "/"
+  show (Digit d)      = show d
+  show Extern         = "extern"
+  show (Identifier s) = s
+  show Def            = "def"
+
+process :: String -> [Token]
+process input = snd . runWriter $ token input
 
 token :: String -> Writer [Token] String
 token input =
@@ -27,12 +47,12 @@ parse a@(x:xs) |
   isDigit x = (Just $ Digit (read $ takeWhile isDigit a), dropWhile isDigit a)
   | x  == '('   =  (Just LParen, xs)
   | x  == ')'   =  (Just RParen, xs)
-  | x  == '+'   =  (Just(BinaryOp Add), xs)
-  | x  == '-'   =  (Just(BinaryOp Subtract), xs)
-  | x  == '*'   =  (Just(BinaryOp Multiply), xs)
-  | x  == '/'   =  (Just(BinaryOp Divide), xs)
+  | x  == '+'   =  (Just Add, xs)
+  | x  == '-'   =  (Just Subtract, xs)
+  | x  == '*'   =  (Just Multiply, xs)
+  | x  == '/'   =  (Just Divide, xs)
   | x  == '\n'  =  (Nothing, xs)
-  | x == '#'    =  (Nothing, dropWhile (/= '\n')) xs
+  | x == '#'    =  (Nothing, dropWhile (/= '\n') xs) 
   | isLetter x  =  identifier a
   | otherwise   =  (Nothing, xs)
 

@@ -1,9 +1,1 @@
--((()+++23242-((()+++23242-((()+++23242(1+2)
-
-
-extern HI
-extern YO
-
-hello = 123
-
-read_this = 123 #DO NOT READ THIS
+((2+3)+(1-3)))
