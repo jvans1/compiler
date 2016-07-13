@@ -117,86 +117,101 @@ parse = addition <|> subtraction <|>  multiplication <|> division <|> term
 logError :: String -> Parser ()
 logError err = tell (err ++ "\n\n")
 
-matchLParen :: Parser ()
-matchLParen = do
-      list <- get
-      case list of
-        (L.LParen:xs) -> put xs
-        _             -> fail ""
-
-
 division :: Parser Expression
 division = do
-    originalList <- get
-    matchLParen
-    expr1 <- parse
-    l1 <- get
-    case l1 of
-      (L.Divide:xs2) -> do
-          put xs2
-          expr2 <- parse
-          list <- get
-          case list of
-            (L.RParen:xs) -> return (BinaryOp Divide expr1 expr2)
-            (x:xs) -> do 
-              logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-              recover xs  >> fail ""
-      _              -> put originalList >> fail ""
+      list <- get
+      case list of
+        (L.LParen:xs) -> do
+          put xs
+          expr1 <- parse
+          l1 <- get
+          case l1 of
+            (L.Divide:xs2) -> do
+              put xs2
+              expr2 <- parse
+              t2 <- get
+              case t2 of
+                (L.RParen:t3) -> do 
+                  put t3
+                  return (BinaryOp Divide expr1 expr2)
+                (x:xs)         -> do 
+                  logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+                  recover xs
+                  return (BinaryOp Subtract expr1 expr2)
+            _ -> rollBack list 
+        _ -> rollBack list
 
 multiplication :: Parser Expression
 multiplication = do
-    originalList <- get
-    matchLParen
-    expr1 <- parse
-    l1 <- get
-    case l1 of
-      (L.Multiply:xs2) -> do
-        put xs2
-        expr2 <- parse
-        list <- get
-        case list of
-          (L.RParen:xs) -> return (BinaryOp Multiply expr1 expr2)
-          (x:xs) -> do 
-            logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-            recover xs  >> fail ""
-      _              -> put originalList >> fail ""
-
-
+      list <- get
+      case list of
+        (L.LParen:xs) -> do
+          put xs
+          expr1 <- parse
+          l1 <- get
+          case l1 of
+            (L.Multiply:xs2) -> do
+              put xs2
+              expr2 <- parse
+              t2 <- get
+              case t2 of
+                (L.RParen:t3) -> do 
+                  put t3
+                  return (BinaryOp Multiply expr1 expr2)
+                (x:xs)         -> do 
+                  logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+                  recover xs
+                  return (BinaryOp Subtract expr1 expr2)
+            _ -> rollBack list 
+        _ -> rollBack list
 
 subtraction :: Parser Expression
 subtraction = do
-    originalList <- get
-    matchLParen
-    expr1 <- parse
-    l1 <- get
-    case l1 of
-      (L.Subtract:xs2) -> do
-          put xs2
-          expr2 <- parse
-          list <- get
-          case list of
-            (L.RParen:xs) -> return (BinaryOp Subtract expr1 expr2)
-            (x:xs) -> do 
-              logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-              recover xs  >> fail ""
-      _              -> put originalList >> fail ""
+      list <- get
+      case list of
+        (L.LParen:xs) -> do
+          put xs
+          expr1 <- parse
+          l1 <- get
+          case l1 of
+            (L.Subtract:xs2) -> do
+              put xs2
+              expr2 <- parse
+              t2 <- get
+              case t2 of
+                (L.RParen:t3) -> do 
+                  put t3
+                  return (BinaryOp Subtract expr1 expr2)
+                (x:xs)         -> do 
+                  logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+                  recover xs
+                  return (BinaryOp Subtract expr1 expr2)
+            _ -> rollBack list 
+        _ -> rollBack list
+
 addition :: Parser Expression
 addition = do
-    originalList <- get
-    matchLParen
-    expr1 <- parse
-    l1 <- get
-    case l1 of
-      (L.Add:xs2) -> do
-        put xs2
-        expr2 <- parse
-        list <- get
-        case list of
-          (L.RParen:xs) -> return (BinaryOp Add expr1 expr2)
-          (x:xs) -> do 
-            logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-            recover xs  >> fail ""
-      _              -> put originalList >> fail ""
+      list <- get
+      case list of
+        (L.LParen:xs) -> do
+          put xs
+          expr1 <- parse
+          l1 <- get
+          case l1 of
+            (L.Add:xs2) -> do
+              put xs2
+              expr2 <- parse
+              t2 <- get
+              case t2 of
+                (L.RParen:t3) -> do 
+                  put t3
+                  return (BinaryOp Add expr1 expr2)
+                (x:xs)         -> do 
+                  logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+                  recover xs
+                  return (BinaryOp Add expr1 expr2)
+            _ -> rollBack list 
+        _ -> rollBack list
 
 
 rollBack xs = put xs >> fail ""
