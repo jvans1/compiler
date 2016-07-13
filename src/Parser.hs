@@ -124,91 +124,80 @@ matchLParen = do
         (L.LParen:xs) -> put xs
         _             -> fail ""
 
-matchDivide :: Parser ()
-matchDivide = do
-      l1 <- get
-      case l1 of
-        (L.Divide:xs2) -> put xs2
-        _              -> fail ""
-
 
 division :: Parser Expression
 division = do
-    list <- get
+    originalList <- get
     matchLParen
     expr1 <- parse
-    matchDivide
-    expr2 <- parse
-    list <- get
-    case list of
-      (L.RParen:xs) -> return (BinaryOp Divide expr1 expr2)
-      (x:xs) -> do 
-        logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-        recover xs  >> fail ""
-
-matchMultiply :: Parser ()
-matchMultiply = do
-      l1 <- get
-      case l1 of
-        (L.Multiply:xs2) -> put xs2
-        _              -> fail ""
+    l1 <- get
+    case l1 of
+      (L.Divide:xs2) -> do
+          put xs2
+          expr2 <- parse
+          list <- get
+          case list of
+            (L.RParen:xs) -> return (BinaryOp Divide expr1 expr2)
+            (x:xs) -> do 
+              logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+              recover xs  >> fail ""
+      _              -> put originalList >> fail ""
 
 multiplication :: Parser Expression
 multiplication = do
-    list <- get
+    originalList <- get
     matchLParen
     expr1 <- parse
-    matchMultiply
-    expr2 <- parse
-    list <- get
-    case list of
-      (L.RParen:xs) -> return (BinaryOp Multiply expr1 expr2)
-      (x:xs) -> do 
-        logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-        recover xs  >> fail ""
+    l1 <- get
+    case l1 of
+      (L.Multiply:xs2) -> do
+        put xs2
+        expr2 <- parse
+        list <- get
+        case list of
+          (L.RParen:xs) -> return (BinaryOp Multiply expr1 expr2)
+          (x:xs) -> do 
+            logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+            recover xs  >> fail ""
+      _              -> put originalList >> fail ""
 
-matchSubtract :: Parser ()
-matchSubtract = do
-      l1 <- get
-      case l1 of
-        (L.Subtract:xs2) -> put xs2
-        _              -> fail ""
+
 
 subtraction :: Parser Expression
 subtraction = do
-    list <- get
+    originalList <- get
     matchLParen
     expr1 <- parse
-    matchSubtract
-    expr2 <- parse
-    list <- get
-    case list of
-      (L.RParen:xs) -> return (BinaryOp Subtract expr1 expr2)
-      (x:xs) -> do 
-        logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-        recover xs  >> fail ""
-
-
-matchAdd :: Parser ()
-matchAdd = do
-      l1 <- get
-      case l1 of
-        (L.Add:xs2) -> put xs2
-        _              -> fail ""
-
+    l1 <- get
+    case l1 of
+      (L.Subtract:xs2) -> do
+          put xs2
+          expr2 <- parse
+          list <- get
+          case list of
+            (L.RParen:xs) -> return (BinaryOp Subtract expr1 expr2)
+            (x:xs) -> do 
+              logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+              recover xs  >> fail ""
+      _              -> put originalList >> fail ""
 addition :: Parser Expression
 addition = do
-    list <- get
+    originalList <- get
     matchLParen
     expr1 <- parse
-    matchAdd
-    expr2 <- parse
-    list <- get
-    case list of
-      (L.RParen:xs) -> return (BinaryOp Add expr1 expr2)
-      (x:xs) -> do 
-        logError $ "Invalid token found: " ++ show x ++ ". Expected )"
-        recover xs  >> fail ""
+    l1 <- get
+    case l1 of
+      (L.Add:xs2) -> do
+        put xs2
+        expr2 <- parse
+        list <- get
+        case list of
+          (L.RParen:xs) -> return (BinaryOp Add expr1 expr2)
+          (x:xs) -> do 
+            logError $ "Invalid token found: " ++ show x ++ ". Expected )"
+            recover xs  >> fail ""
+      _              -> put originalList >> fail ""
+
 
 rollBack xs = put xs >> fail ""
 
