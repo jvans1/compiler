@@ -116,12 +116,14 @@ expression :: Parser Expression
 expression = addition <|> subtraction <|> functionDeclaration <|> extern <|> term
 
 functionInvocation :: Parser Expression
-functionInvocation = parseWithRollback $ do
-  (Var fnName) <- identifier
-  _      <- lparen
-  exprs   <- many expression
+functionInvocation = do 
+  expr <- parseWithRollback $ do
+            (Var fnName) <- identifier
+            _      <- lparen
+            exprs <- many expression
+            return (Call fnName exprs)
   _      <- requireMatch rparen
-  return (Call fnName exprs)
+  return  expr
 
 
 matchDef :: Parser ()
@@ -178,29 +180,35 @@ requireMatch parser = do
       tokens <- get
       case tokens of
         []    -> tell "Syntax error, unexpected end of input\n" >> fail ""
-        (x:_) -> tell ("Unexpected token: " ++ show x ++ "\n") >> fail ""
+        (x:xs) -> tell ("Unexpected token: " ++ show x ++ "\n") >> put xs >> fail ""
  
 
 addition :: Parser Expression
-addition = parseWithRollback $ do
+addition = do
+  expr <- parseWithRollback $ do
               expr1 <- term
               _    <-  matchAdd
-              expr2 <- requireMatch expression
-              return (BinaryOp Add expr1 expr2)
+              return expr1
+  expr2 <- requireMatch expression
+  return (BinaryOp Add expr expr2)
 
 multiplication :: Parser Expression
-multiplication = parseWithRollback $ do
-              expr1 <- factor
-              _    <-  matchMultiply
-              expr2 <- requireMatch term
-              return (BinaryOp Multiply expr1 expr2)
+multiplication = do
+          expr <- parseWithRollback $ do
+                    expr1 <- factor
+                    _    <-  matchMultiply
+                    return expr1
+          expr2 <- requireMatch term
+          return (BinaryOp Multiply expr expr2)
 
 division :: Parser Expression
-division = parseWithRollback $ do
+division = do
+            expr <- parseWithRollback $ do
               expr1 <- factor
               _    <-  matchDivide
-              expr2 <- requireMatch term
-              return (BinaryOp Divide expr1 expr2)
+              return expr1
+            expr2 <- requireMatch term
+            return (BinaryOp Divide expr expr2)
 
 factor :: Parser Expression
 factor = functionInvocation <|> parenthesisExpr <|> identifier <|> digit
@@ -228,11 +236,13 @@ matchSubtract = do
     _               -> fail ""
 
 subtraction :: Parser Expression
-subtraction = parseWithRollback $ do
+subtraction = do 
+    expr <- parseWithRollback $ do
               expr1 <- term
               _    <-  matchSubtract
-              expr2 <- requireMatch expression
-              return (BinaryOp Subtract expr1 expr2)
+              return expr1
+    expr2 <- requireMatch expression
+    return (BinaryOp Subtract expr expr2)
 
 term :: Parser Expression
 term  = multiplication <|> division <|> factor 
@@ -259,11 +269,10 @@ rparen = do
     _               -> fail ""
 
 parenthesisExpr :: Parser Expression
-parenthesisExpr = parseWithRollback $ do
-                    _ <- lparen
-                    expr <- expression
-                    _ <- requireMatch rparen
-                    return expr
+parenthesisExpr = do
+    expr <- parseWithRollback (lparen >> expression)
+    _ <- requireMatch rparen
+    return expr
 
 matchExtern :: Parser ()
 matchExtern = do
