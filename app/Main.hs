@@ -10,12 +10,12 @@ main = do
   contents <- readFile file
   let (expression, err) = compile (process contents) 
   case expression of
-    Just ex -> do
+    Just exs -> do
       case err of
         "" ->  do
           --No error successful parse
           putStrLn "Succesful parse: \n"
-          print expression
+          mapM_ print exs
         _  -> do
           --Errors that were recoverable, report to user
           putStrLn "Parse Failed: \n"
