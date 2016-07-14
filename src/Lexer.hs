@@ -13,7 +13,7 @@ data Token = LParen
   | Digit Float
   | Extern
   | Identifier String
-  | Def 
+  | Def  deriving (Eq)
 
 
 instance Show Token where
