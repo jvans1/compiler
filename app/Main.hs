@@ -2,7 +2,14 @@ module Main where
 import Lexer(process)
 import Parser(compile)
 import System.Environment(getArgs)
+import CodeGeneration(emptyModule)
+import Emit(codegen)
 
+import qualified LLVM.General.AST as AST
+
+
+initModule :: AST.Module
+initModule = emptyModule "my cool jit"
 
 main :: IO ()
 main = do
@@ -15,7 +22,8 @@ main = do
         "" ->  do
           --No error successful parse
           putStrLn "Succesful parse: \n"
-          mapM_ print exs
+          codegen initModule exs
+          return ()
         _  -> do
           --Errors that were recoverable, report to user
           putStrLn "Parse Failed: \n"

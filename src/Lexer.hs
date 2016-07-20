@@ -10,7 +10,7 @@ data Token = LParen
   | Subtract
   | Multiply
   | Divide
-  | Digit Float
+  | Digit Double
   | Extern
   | Identifier String
   | Def  deriving (Eq)

@@ -1,5 +1,6 @@
 module Parser(compile) where
 import Control.Monad.Writer.Lazy(WriterT, runWriterT, tell, MonadWriter)
+import Types
 import Control.Monad.Trans(lift)
 import Control.Applicative((<|>))
 import Data.Maybe(Maybe, fromJust)
@@ -98,27 +99,18 @@ import qualified Lexer as L
 -- No more non terminals for branch, all inputs matching
 -- Move pointer to next lexeme
 --
-data Op = Add | Subtract | Divide | Multiply deriving Show
-data Expression = BinaryOp Op Expression Expression
-                  | Digit Float
-                  | Var String
-                  | Call String [Expression]
-                  | Function String [Expression] Expression
-                  | Extern String [Expression] deriving Show
-
 type Parser = MaybeT (WriterT String (State [Token]))
 
 compile :: [Token] -> (Maybe [Expression], String)
 compile tokens = evalState (runWriterT . runMaybeT $ many expression) tokens
 
-
 expression :: Parser Expression
 expression = addition <|> subtraction <|> functionDeclaration <|> extern <|> term
 
 functionInvocation :: Parser Expression
-functionInvocation = do 
+functionInvocation = do
   expr <- parseWithRollback $ do
-            (Var fnName) <- identifier
+            fnName <- identifier
             _      <- lparen
             exprs <- many expression
             return (Call fnName exprs)
@@ -133,30 +125,28 @@ matchDef = do
     (L.Def:xs) -> put xs
     _        -> fail ""
 
-identifier :: Parser Expression
+identifier :: Parser String
 identifier = do
   list <- get
   case list of
-    (L.Identifier i:xs) -> put xs >> return (Var i)
+    (L.Identifier i:xs) -> put xs >> return i
     _                   -> fail ""
 
 
 functionDeclaration :: Parser Expression
 functionDeclaration = parseWithRollback $ do
                         _ <- matchDef 
-                        (Var fnName) <- requireMatch identifier
+                        fnName <- requireMatch identifier
                         _ <- lparen
                         args <- many identifier
                         _ <- rparen
                         fnBody <- requireMatch expression
                         return (Function fnName args fnBody)
-  
-
 
 logError :: String -> Parser ()
 logError err = tell (err ++ "\n\n")
 
-parseWithRollback :: Parser Expression -> Parser Expression
+parseWithRollback :: Parser a -> Parser a
 parseWithRollback parser = do
             tokens <- get
             result <- lift $ runMaybeT parser
@@ -211,7 +201,7 @@ division = do
             return (BinaryOp Divide expr expr2)
 
 factor :: Parser Expression
-factor = functionInvocation <|> parenthesisExpr <|> identifier <|> digit
+factor = functionInvocation <|> parenthesisExpr <|> digit
 
 matchDivide :: Parser ()
 matchDivide =  do
@@ -247,7 +237,7 @@ subtraction = do
 term :: Parser Expression
 term  = multiplication <|> division <|> factor 
 
-many :: Parser Expression -> Parser [Expression]
+many :: Parser a -> Parser [a]
 many parser = do
   res <- lift $ runMaybeT $ parseWithRollback parser
   case res of
@@ -284,10 +274,9 @@ matchExtern = do
 extern :: Parser Expression
 extern = do
   _ <- matchExtern
-  (Var name) <- identifier 
-  exprs <- requireMatch $ many expression
-  return (Extern name exprs)
-  
+  name <- identifier
+  idents <- requireMatch $ many identifier
+  return (Extern name idents)
 
 digit :: Parser Expression
 digit = do
