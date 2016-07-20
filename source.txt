@@ -1,1 +1,11 @@
-((3 * 3) +(4 - 4))
+extern sin(x)
+
+def hi(a, b)
+  sin(180) + 1 + 3 +  a + b
+
+def bye(a, b)
+  a / b
+
+
+
+hi(2,3)

@@ -171,7 +171,6 @@ requireMatch parser = do
       case tokens of
         []    -> tell "Syntax error, unexpected end of input\n" >> fail ""
         (x:xs) -> tell ("Unexpected token: " ++ show x ++ "\n") >> put xs >> fail ""
- 
 
 addition :: Parser Expression
 addition = do
@@ -234,8 +233,14 @@ subtraction = do
     expr2 <- requireMatch expression
     return (BinaryOp Subtract expr expr2)
 
+
+variable :: Parser Expression
+variable = parseWithRollback $ do
+              ident <- identifier
+              return (Var ident)
+
 term :: Parser Expression
-term  = multiplication <|> division <|> factor 
+term  = multiplication <|> division <|> factor <|> variable 
 
 many :: Parser a -> Parser [a]
 many parser = do
@@ -275,7 +280,9 @@ extern :: Parser Expression
 extern = do
   _ <- matchExtern
   name <- identifier
+  _ <- lparen
   idents <- requireMatch $ many identifier
+  _ <- requireMatch rparen
   return (Extern name idents)
 
 digit :: Parser Expression

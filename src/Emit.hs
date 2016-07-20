@@ -1,6 +1,5 @@
 module Emit where
-
-
+import JIT
 import LLVM.General.Module
 import LLVM.General.Context
 
@@ -36,7 +35,7 @@ cgen (S.BinaryOp op a b) =
     Nothing -> error $ "no such operator" ++ (show op)
 
 
-binops = Map.fromList [(S.Add, fadd), (S.Subtract, fsub), (S.Divide, fmul), (S.Multiply, fdiv), (S.LessThan, lt)]
+binops = Map.fromList [(S.Add, fadd), (S.Subtract, fsub), (S.Divide, fdiv), (S.Multiply, fmul), (S.LessThan, lt)]
 
 lt :: AST.Operand -> AST.Operand -> Codegen AST.Operand
 lt a b = do
@@ -44,14 +43,14 @@ lt a b = do
   uitofp double test
 
 codegen :: AST.Module -> [S.Expression] -> IO AST.Module
-codegen mod fns = withContext $ \context ->
-  liftError $ withModuleFromAST context newast $ \m -> do
-    llstr <- moduleLLVMAssembly m
-    putStrLn llstr
-    return newast
+codegen mod fns = do
+  res <- runJIT oldast
+  case res of
+    Right newast -> return newast
+    Left err -> putStrLn err >> return oldast
   where
     modn = mapM codegenTop fns
-    newast = runLLVM mod modn
+    oldast = runLLVM mod modn
 
 codegenTop :: S.Expression -> LLVM ()
 codegenTop (S.Function name args body) =

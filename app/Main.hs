@@ -15,13 +15,21 @@ main :: IO ()
 main = do
   file:_ <- getArgs
   contents <- readFile file
-  let (expression, err) = compile (process contents) 
+  let lexingRes = (process contents)
+  putStrLn "Lexing Results"
+  putStrLn "=============="
+  print lexingRes
+  putStrLn "=============="
+  let (expression, err) = compile lexingRes
   case expression of
     Just exs -> do
       case err of
         "" ->  do
           --No error successful parse
-          putStrLn "Succesful parse: \n"
+          putStrLn "Parsing Results"
+          putStrLn "=============="
+          print exs
+          putStrLn "=============="
           codegen initModule exs
           return ()
         _  -> do
