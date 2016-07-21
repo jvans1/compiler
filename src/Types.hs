@@ -6,5 +6,6 @@ data Expression = BinaryOp Op Expression Expression
                   | Var String
                   | Call String [Expression]
                   | Function String [String] Expression
-                  | Extern String [String] deriving Show
-
+                  | If Expression Expression Expression
+                  | For String Expression Expression Expression Expression
+                  | Extern String [String] deriving (Show, Eq)

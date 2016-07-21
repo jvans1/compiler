@@ -230,6 +230,9 @@ ret val = terminator $ Do $ Ret (Just val) []
 call :: Operand -> [Operand] -> Codegen Operand
 call fn args = instr $ Call Nothing CC.C [] (Right fn) (toArgs args) [] []
 
+phi :: Type -> [(Operand, Name)] -> Codegen Operand
+phi ty incoming =  instr $ Phi ty incoming []
+
 alloca :: Type -> Codegen Operand
 alloca ty = instr $ Alloca ty Nothing 0 []
 

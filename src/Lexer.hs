@@ -9,10 +9,18 @@ data Token = LParen
   | Add
   | Subtract
   | Multiply
+  | Comma
   | Divide
   | Digit Double
   | Extern
   | Identifier String
+  | If
+  | Then
+  | Else
+  | For
+  | In
+  | Equal
+  | LessThan
   | Def  deriving (Eq)
 
 
@@ -20,8 +28,16 @@ instance Show Token where
   show LParen         = "("
   show RParen         = ")"
   show Add            = "+"
+  show If             = "if"
+  show Then           = "then"
+  show Else           = "else"
+  show For            = "for"
+  show In            = "in"
+  show Equal          = "="
   show Subtract       = "-"
+  show LessThan       = "<"
   show Multiply       = "*"
+  show Comma          = "Comma"
   show Divide         = "/"
   show (Digit d)      = show d
   show Extern         = "extern"
@@ -49,7 +65,10 @@ parse a@(x:xs) |
   | x  == ')'   =  (Just RParen, xs)
   | x  == '+'   =  (Just Add, xs)
   | x  == '-'   =  (Just Subtract, xs)
+  | x  == '='   =  (Just Equal, xs)
+  | x  == '<'   =  (Just LessThan, xs)
   | x  == '*'   =  (Just Multiply, xs)
+  | x  == ','   =  (Just Comma, xs)
   | x  == '/'   =  (Just Divide, xs)
   | x  == '\n'  =  (Nothing, xs)
   | x == '#'    =  (Nothing, dropWhile (/= '\n') xs) 
@@ -63,4 +82,9 @@ identifier input = let str = takeWhile isLetter input
                     case str of
                       "extern" -> (Just Extern, restOfString)
                       "def"    -> (Just Def, restOfString)
+                      "if"     -> (Just If, restOfString)
+                      "then"   -> (Just Then, restOfString)
+                      "else"   -> (Just Else, restOfString)
+                      "for"    -> (Just For, restOfString)
+                      "in"    ->  (Just In, restOfString)
                       _        -> (Just (Identifier str), restOfString)

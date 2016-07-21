@@ -1,6 +1,7 @@
 module Parser(compile) where
 import Control.Monad.Writer.Lazy(WriterT, runWriterT, tell, MonadWriter)
 import Types
+import Control.Monad(void)
 import Control.Monad.Trans(lift)
 import Control.Applicative((<|>))
 import Data.Maybe(Maybe, fromJust)
@@ -10,15 +11,15 @@ import Lexer(Token)
 import qualified Lexer as L
 {-
   Grammar
-  # Expr -> Term + Expr | Term - Expr | Keyword Ident FParamList Expr | Keyword Ident | Term
+  # Expr -> Term + Expr | Term - Expr | If Expr Then Expr Else Expr | For String Expr Expr Expr Expr | Keyword Ident FParamList Expr | Keyword Ident | Term
   # FParamList -> (FParamList, FParam) | FParam
   # FParam -> Ident | Ø
   # OptParams -> Params | Ø
   # Params -> Params, Param | Param
   # Param -> Expr
-  # Term -> Factor * Term | Term / Expr | Factor
-  # Factor -> Ident | Digit | (Expr) | Ident OptParams  
-  # Keyword -> def | extern
+  # Term -> Factor * Term | Term / Expr | Factor < Expr | Factor
+  # Factor ->  Ident | Digit | (Expr) | Ident OptParams
+  # Keyword -> def | extern | if | else | then
 -}
 --    (3)
 
@@ -105,7 +106,85 @@ compile :: [Token] -> (Maybe [Expression], String)
 compile tokens = evalState (runWriterT . runMaybeT $ many expression) tokens
 
 expression :: Parser Expression
-expression = addition <|> subtraction <|> functionDeclaration <|> extern <|> term
+expression = addition <|> subtraction <|> functionDeclaration <|> ifthen <|> for <|> extern <|> term
+
+matchFor :: Parser ()
+matchFor = do
+  list <- get
+  case list of
+    (L.For:xs) -> void (put xs)
+    _        -> fail ""
+
+matchEqual :: Parser ()
+matchEqual = do
+  list <- get
+  case list of
+    (L.Equal:xs) -> void (put xs)
+    _        -> fail ""
+
+matchComma :: Parser ()
+matchComma = do
+  list <- get
+  case list of
+    (L.Comma:xs) -> void (put xs)
+    _        -> fail ""
+
+matchIn :: Parser ()
+matchIn = do
+  list <- get
+  case list of
+    (L.In:xs) -> void (put xs)
+    _        -> fail ""
+
+for :: Parser Expression
+for = do
+  _ <- matchFor
+  var <- requireMatch identifier
+  _ <- requireMatch matchEqual
+  start <- requireMatch expression
+  _ <- requireMatch matchComma
+  cond <- requireMatch expression
+  _ <- requireMatch matchComma
+  step <- requireMatch expression
+  _ <- requireMatch matchIn
+  body <- requireMatch expression
+  return $ For var start cond step body
+  
+  
+
+
+ifthen :: Parser Expression
+ifthen = do
+  _ <- matchIf
+  conditional <- expression
+  _ <- requireMatch matchThen
+  expr1 <- requireMatch expression
+  _ <- requireMatch matchElse
+  expr2 <- requireMatch expression
+  return (If conditional expr1 expr2)
+  where
+    matchIf :: Parser ()
+    matchIf = do
+      list <- get
+      case list of
+        (L.If:xs) -> void (put xs)
+        _      -> fail ""
+
+    matchThen :: Parser ()
+    matchThen = do
+      list <- get
+      case list of
+        (L.Then:xs) -> void (put xs)
+        _        -> fail ""
+
+    matchElse :: Parser ()
+    matchElse = do
+      list <- get
+      case list of
+        (L.Else:xs) -> void (put xs)
+        _        -> fail ""
+
+
 
 functionInvocation :: Parser Expression
 functionInvocation = do
@@ -200,7 +279,24 @@ division = do
             return (BinaryOp Divide expr expr2)
 
 factor :: Parser Expression
-factor = functionInvocation <|> parenthesisExpr <|> digit
+factor = functionInvocation <|> parenthesisExpr <|> digit <|> variable
+
+
+lessThan :: Parser Expression
+lessThan = do
+  expr1 <- parseWithRollback $ do
+    expr <- factor
+    _ <- matchLT
+    return expr
+  expr2 <- requireMatch expression
+  return $ BinaryOp LessThan expr1 expr2
+  where
+    matchLT :: Parser ()
+    matchLT = do
+      list <- get
+      case list of
+        (L.LessThan:xs)  -> void (put xs)
+        _              -> fail ""
 
 matchDivide :: Parser ()
 matchDivide =  do
@@ -240,7 +336,7 @@ variable = parseWithRollback $ do
               return (Var ident)
 
 term :: Parser Expression
-term  = multiplication <|> division <|> factor <|> variable 
+term  = multiplication <|> division <|> lessThan <|> factor  
 
 many :: Parser a -> Parser [a]
 many parser = do

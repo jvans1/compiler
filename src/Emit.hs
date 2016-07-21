@@ -17,6 +17,8 @@ import qualified Data.Map as Map
 import CodeGeneration
 import qualified Types as S
 
+zero = cons $ C.Float (F.Double 0.0)
+
 liftError :: ExceptT String IO a -> IO a
 liftError = runExceptT >=> either fail return
 
@@ -33,7 +35,48 @@ cgen (S.BinaryOp op a b) =
       cb <- cgen b
       f ca cb
     Nothing -> error $ "no such operator" ++ (show op)
+cgen (S.If cond tr fl) = do
+  ifthen <- addBlock "if.then"
+  ifelse <- addBlock "if.else"
+  ifexit <- addBlock "if.exit"
+  cond   <- cgen cond
+  test   <- fcmp FP.ONE zero cond
+  cbr test ifthen ifelse
 
+  setBlock ifthen
+  trval <- cgen tr
+  br ifexit
+  ifthen <- getBlock
+  setBlock ifelse
+  flval <- cgen fl
+  br ifexit
+  ifelse <- getBlock
+
+  setBlock ifexit
+  phi double [(trval, ifthen), (flval, ifelse)]
+cgen (S.For ivar start cond step body) = do
+  forloop <- addBlock "for.loop"
+  forexit <- addBlock "for.exit"
+
+  i <- alloca double
+  istart <- cgen start
+  stepval <- cgen step
+  store i istart 
+  assign ivar i
+  br forloop
+
+  setBlock forloop
+  cgen body
+  ival <- load i
+  inext <- fadd ival stepval
+  store i inext
+  cond <- cgen cond
+  test <- fcmp FP.ONE zero cond
+  cbr test forloop forexit
+
+  setBlock forexit
+  return zero
+  
 
 binops = Map.fromList [(S.Add, fadd), (S.Subtract, fsub), (S.Divide, fdiv), (S.Multiply, fmul), (S.LessThan, lt)]
 
