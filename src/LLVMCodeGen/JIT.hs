@@ -1,4 +1,4 @@
-module JIT where
+module LLVMCodeGen.JIT where
 import Data.Int
 import Data.Word
 import Foreign.Ptr ( FunPtr, castFunPtr )

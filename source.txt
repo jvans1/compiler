@@ -1,7 +1,2 @@
-extern puts(char)
-
-def printstar(n)
-  for i = 1, i < n, 1 in
-    puts(42)
-
-printstar(100)
+def hi()
+  2 + 3

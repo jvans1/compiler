@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module CodeGeneration where
+module LLVMCodeGen.CodeGeneration where
 
 import qualified Types as T
 import Data.Word
@@ -68,7 +68,6 @@ uniqueName nm ns =
   case Map.lookup nm ns of
     Nothing -> (nm, Map.insert nm 1 ns)
     Just ix -> (nm ++ show ix, Map.insert nm (ix + 1) ns)
-
 
 instance IsString Name where
   fromString = Name . fromString

@@ -1,5 +1,5 @@
-module Emit where
-import JIT
+module LLVMCodeGen.Emit where
+import LLVMCodeGen.JIT
 import LLVM.General.Module
 import LLVM.General.Context
 
@@ -14,7 +14,7 @@ import Control.Monad.Except
 import Control.Applicative
 import qualified Data.Map as Map
 
-import CodeGeneration
+import LLVMCodeGen.CodeGeneration
 import qualified Types as S
 
 zero = cons $ C.Float (F.Double 0.0)
