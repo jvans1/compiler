@@ -211,13 +211,22 @@ identifier = do
     (L.Identifier i:xs) -> put xs >> return i
     _                   -> fail ""
 
+functionVars :: Parser [String]
+functionVars = do
+  var <- identifier
+  mcomma <- lift $ runMaybeT matchComma
+  case mcomma of
+    Just _ -> do
+      rest <- functionVars
+      return (var:rest)
+    Nothing -> return [var]
 
 functionDeclaration :: Parser Expression
 functionDeclaration = parseWithRollback $ do
                         _ <- matchDef 
                         fnName <- requireMatch identifier
                         _ <- lparen
-                        args <- many identifier
+                        args <- functionVars
                         _ <- rparen
                         fnBody <- requireMatch expression
                         return (Function fnName args fnBody)

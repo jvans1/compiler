@@ -1,2 +1,2 @@
-def hi()
-  2 + 3
+def bar(a, b, c, d) 
+ a + b + c + d 

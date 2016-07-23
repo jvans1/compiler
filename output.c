@@ -1,5 +1,4 @@
-
-double hi()
+double bar(double a, double b, double c, double d)
 {
- return 2.0 + 3.0;
+ return a + b + c + d;
 }

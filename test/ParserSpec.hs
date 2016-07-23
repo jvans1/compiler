@@ -28,6 +28,11 @@ run = do
       let result = If (BinaryOp (Add) (Digit 2.0) (Digit 3.0)) (Digit 1.0) (Digit 2.0)
       generateAst "if 2 + 3 then \n 1 \nelse\n 2" `shouldBe` [result]
 
+  describe "functions" $ do
+    it "supports functions with variables" $ do
+      let result = Function "foo" ["a", "b"] (BinaryOp Add (Var "a") (Var "b"))
+      generateAst "def foo(a, b)\n a + b" `shouldBe` [result]
+
   describe "for statement" $
     it "supports for statements" $ do
       let result = For "i" (Digit 0.0) (BinaryOp LessThan (Var "i") (Digit 3.0) ) (Digit 1.0) (Digit 5.0)

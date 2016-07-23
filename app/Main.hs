@@ -26,6 +26,11 @@ main = do
           print exs
           putStrLn "=============="
           let s = emit (codegen exs)
+          putStrLn "Code Generation Result"
+          putStrLn "=============="
+          putStrLn s
+          putStrLn "=============="
+          putStrLn "Writing code to output.c"
           writeFile "output.c" s
         _  -> do
           --Errors that were recoverable, report to user

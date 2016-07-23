@@ -21,28 +21,8 @@ data Token = LParen
   | In
   | Equal
   | LessThan
-  | Def  deriving (Eq)
+  | Def  deriving (Eq, Show)
 
-
-instance Show Token where
-  show LParen         = "("
-  show RParen         = ")"
-  show Add            = "+"
-  show If             = "if"
-  show Then           = "then"
-  show Else           = "else"
-  show For            = "for"
-  show In            = "in"
-  show Equal          = "="
-  show Subtract       = "-"
-  show LessThan       = "<"
-  show Multiply       = "*"
-  show Comma          = "Comma"
-  show Divide         = "/"
-  show (Digit d)      = show d
-  show Extern         = "extern"
-  show (Identifier s) = s
-  show Def            = "def"
 
 process :: String -> [Token]
 process input = snd . runWriter $ token input
